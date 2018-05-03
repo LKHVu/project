@@ -52,15 +52,17 @@ public class InventoryController {
 	        System.out.println("An item with barcode "+item.getBarcode()+" already exist");
 	        return new ResponseEntity<Void>(HttpStatus.CONFLICT);
 	    }	
-	    if(i==2){
+	    else if(i==2){
 	        System.out.println("Unexpected error!");
 	        return new ResponseEntity<Void>(HttpStatus.CONFLICT);
-	    }	
+	    }
+	    else {
 	    s.insert(item.getBarcode(), item.getName(), item.getQuantity());
 	  
 	    HttpHeaders headers = new HttpHeaders();
 	    headers.setLocation(ucBuilder.path("/inventory/{barcode}").buildAndExpand(item.getBarcode()).toUri());
 	    return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
+	    }
 	}
 	
 }

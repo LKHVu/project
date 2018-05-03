@@ -1,10 +1,12 @@
 package demo;
 
 public class Item {
-	private final String barcode;
-	private final String name;
+	private String barcode;
+	private String name;
 	private Integer quantity;
 	
+	public Item(){
+	}
 	public Item(String barcode, String name, Integer quantity) {
 		this.barcode = barcode;
 		this.name = name;
