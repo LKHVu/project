@@ -4,11 +4,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -19,7 +19,8 @@ import java.util.*;
 public class InventoryController {
 	
 	//------------show inventory-------------//
-	@RequestMapping(value = "/inventory", method = RequestMethod.GET)
+	@CrossOrigin(origins = "http://localhost:9000")
+	@RequestMapping(value = "/product", method = RequestMethod.GET)
 	public List<Item> getInventory() {
 		List<Item> al = new ArrayList<Item>();
 		//Entity e = new Entity();
@@ -29,40 +30,50 @@ public class InventoryController {
 		return al;
 	}
 	
-	//------------update inventory-------------//
-	@RequestMapping(value = "/inventory/update", method = RequestMethod.PUT)
-	public @ResponseBody String updateInventory(@RequestParam String barcode, @RequestParam Integer qty) {
+	@CrossOrigin(origins = "http://localhost:9000")
+	@RequestMapping(value = "/product/{barcode}", method = RequestMethod.GET)
+	public Item getItem(@PathVariable("barcode") String barcode) {
 		sql s = new sql();
-		s.update(barcode, qty);
-		s.list(new ArrayList<Item>());
+		Item item = s.listOneItem(barcode);
 		s.closeConnection();
-		return "Updated";
+		return item;
 	}
 	
-	//insert new item in inventory
+	@CrossOrigin(origins = "http://localhost:9000")
+	@RequestMapping(value = "/product/{barcode}", method = RequestMethod.PUT)
+	public void updateInventory(@PathVariable("barcode") String barcode, @RequestBody Item item) {
+		//Item currentItem = getItem(barcode);
+		sql s = new sql();
+		s.update(getItem(barcode), item);
+		s.closeConnection();
+	}
+	
+	@CrossOrigin(origins = "http://localhost:9000")
+	@RequestMapping(value = "/product/{barcode}", method = RequestMethod.DELETE)
+	public @ResponseBody String delete(@PathVariable("barcode") String barcode) {
+		sql s = new sql();
+		boolean i = s.delete(barcode);
+		if (i) {
+			s.closeConnection();
+			return "Item deleted!";
+			
+		} else {
+			s.closeConnection();
+			return "No barcode matched!";
+		}
+	}
+	
+	@CrossOrigin(origins = "http://localhost:9000")
 	@RequestMapping(value = "/product", method = RequestMethod.POST)
-	public ResponseEntity<Void> createItem(@RequestBody Item item, UriComponentsBuilder ucBuilder){
-	    System.out.println("barcode: "+item.getBarcode());
-	    System.out.println("name: "+item.getName());
-	    System.out.println("quantity: "+item.getQuantity());
-	    
-	    sql s = new sql();
-	    int i=s.isExist(item.getBarcode());
-	    if(i==1){
-	        System.out.println("An item with barcode "+item.getBarcode()+" already exist");
-	        return new ResponseEntity<Void>(HttpStatus.CONFLICT);
-	    }	
-	    else if(i==2){
-	        System.out.println("Unexpected error!");
-	        return new ResponseEntity<Void>(HttpStatus.CONFLICT);
-	    }
-	    else {
-	    s.insert(item.getBarcode(), item.getName(), item.getQuantity());
-	  
-	    HttpHeaders headers = new HttpHeaders();
-	    headers.setLocation(ucBuilder.path("/inventory/{barcode}").buildAndExpand(item.getBarcode()).toUri());
-	    return new ResponseEntity<Void>(headers, HttpStatus.CREATED);
-	    }
+	public @ResponseBody String create(@RequestBody Item item) {
+		
+		sql s = new sql();
+		if (s.create(item)) {
+			s.closeConnection();
+			return "Item created!";
+		} else {
+			s.closeConnection();
+			return "Item duplicated!";
+		}
 	}
-	
 }
