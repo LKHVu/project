@@ -3,14 +3,19 @@ package demo;
 public class Item {
 	private String barcode;
 	private String name;
-	private Integer quantity;
+	private String quantity;
+	private String shop;
 	
-	public Item(){
+	
+	public Item() {
 	}
-	public Item(String barcode, String name, Integer quantity) {
+	
+	
+	public Item(String barcode, String name, String quantity, String shop) {
 		this.barcode = barcode;
 		this.name = name;
 		this.quantity = quantity;
+		this.shop = shop;
 	}
 	
 	
@@ -22,21 +27,11 @@ public class Item {
 		return name;
 	}
 	
-	public Integer getQuantity() {
+	public String getQuantity() {
 		return quantity;
 	}
 	
-	/*
-	public void setBarcode(String barcode) {
-		this.barcode = barcode;
+	public String getShop() {
+		return shop;
 	}
-	
-	public void setName(String name) {
-		this.name = name;
-	}
-	
-	public void setQuantity(Integer quantity) {
-		this.quantity = quantity;
-	}
-	*/
 }
