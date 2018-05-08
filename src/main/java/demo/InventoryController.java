@@ -28,6 +28,53 @@ public class InventoryController {
 	final String s2_token = ran.getRan();
 	final String s3_token = ran.getRan();
 	
+	public List getOne(sql s, String barcode, int shop) {
+		if (s.isNull(barcode, shop)) {
+			s.closeConnection();
+			HashMap<String, String> map = new HashMap<String, String>();
+			List<HashMap> al = new ArrayList<HashMap>();
+			map.put("error", "Product not found");
+			al.add(map);
+			return al;
+			}
+			else {
+			List<Item> al = new ArrayList<Item>();
+			s.listOneItem(barcode, al, shop);
+			s.closeConnection();
+			return al;
+			}
+	}
+	public HashMap<String, String> updateShop(sql s, String barcode, int shop, Map<String, String> json_map){
+	HashMap<String, String> map = new HashMap<String, String>();
+	if (s.isNull(barcode, shop)) {
+		s.closeConnection();
+		map.put("error", "Product not found");
+		return map;
+	}
+				else {
+					s.updateShop(json_map.get("type"),
+							 json_map.get("quantity"),
+							 barcode, shop);
+					s.closeConnection();
+					map.put("success", "Product updated");
+					return map;
+				}
+	}
+	
+public HashMap<String, String> createItem(sql s, Item item, int shop){
+	HashMap<String, String> map = new HashMap<String, String>();
+	if (s.create(item, shop)) {
+		s.closeConnection();
+		map.put("success", "Product added");
+		return map;
+	}
+	else {
+		s.closeConnection();
+		map.put("error", "Product duplicated");
+		return map;
+	}
+}
+	
 	@CrossOrigin(origins = "http://localhost:9000")
 	@RequestMapping(value = "/auth", method = RequestMethod.POST)
 	public @ResponseBody HashMap<String, String> create(@RequestBody Account acc) {
@@ -61,24 +108,24 @@ public class InventoryController {
 		sql s = new sql();
 		List<Item> al = new ArrayList<Item>();
 		if (tok.equals(s1_token)){
-			s.list1(al);
+			s.list(al, 1);
 			s.closeConnection();
 			return al;
 		}
 		else if (tok.equals(s2_token)){
-			s.list2(al);
+			s.list(al, 2);
 			s.closeConnection();
 			return al;
 		}
 		else if (tok.equals(s3_token)){
-			s.list3(al);
+			s.list(al, 3);
 			s.closeConnection();
 			return al;
 		}
 		else if (tok.equals(ad_token)){
-			s.list1(al);
-			s.list2(al);
-			s.list3(al);
+			s.list(al, 1);
+			s.list(al, 2);
+			s.list(al, 3);
 			s.closeConnection();
 			return al;
 		}
@@ -99,58 +146,18 @@ public class InventoryController {
 							@RequestParam(value="token", defaultValue="") String tok) {
 		sql s = new sql();
 		if (tok.equals(s1_token)){
-			if (s.isNull1(barcode)) {
-			s.closeConnection();
-			HashMap<String, String> map = new HashMap<String, String>();
-			List<HashMap> al = new ArrayList<HashMap>();
-			map.put("error", "Product not found");
-			al.add(map);
-			return al;
-			}
-			else {
-			List<Item> al = new ArrayList<Item>();
-			s.listOneItem1(barcode, al);
-			s.closeConnection();
-			return al;
-			}
-			
+			return getOne(s, barcode, 1);
 		}
 		else if (tok.equals(s2_token)){
-			if (s.isNull2(barcode)) {
-				s.closeConnection();
-				HashMap<String, String> map = new HashMap<String, String>();
-				List<HashMap> al = new ArrayList<HashMap>();
-				map.put("error", "Product not found");
-				al.add(map);
-				return al;
-			}
-			else {
-				List<Item> al = new ArrayList<Item>();
-				s.listOneItem2(barcode, al);
-				s.closeConnection();
-				return al;
-			}
+			return getOne(s, barcode, 2);
 		}
 		else if (tok.equals(s3_token)){
-			if (s.isNull3(barcode)) {
-				s.closeConnection();
-				HashMap<String, String> map = new HashMap<String, String>();
-				List<HashMap> al = new ArrayList<HashMap>();
-				map.put("error", "Product not found");
-				al.add(map);
-				return al;
-			}
-			else {
-				List<Item> al = new ArrayList<Item>();
-				s.listOneItem3(barcode, al);
-				s.closeConnection();
-				return al;
-			}
+			return getOne(s, barcode, 3);
 		}
 		else if (tok.equals(ad_token)){
-			boolean i=s.isNull1(barcode);
-			boolean i2=s.isNull2(barcode);
-			boolean i3=s.isNull3(barcode);
+			boolean i=s.isNull(barcode, 1);
+			boolean i2=s.isNull(barcode, 2);
+			boolean i3=s.isNull(barcode, 3);
 			if (i && i2 && i3) {
 				s.closeConnection();
 				HashMap<String, String> map = new HashMap<String, String>();
@@ -161,9 +168,9 @@ public class InventoryController {
 			}
 			else {
 				List<Item> al = new ArrayList<Item>();
-				s.listOneItem1(barcode, al);
-				s.listOneItem2(barcode, al);
-				s.listOneItem3(barcode, al);
+				s.listOneItem(barcode, al, 1);
+				s.listOneItem(barcode, al, 2);
+				s.listOneItem(barcode, al, 3);
 				s.closeConnection();
 				return al;
 			}
@@ -188,7 +195,7 @@ public class InventoryController {
 		try {
 			Map<String, String> json_map = mapper.readValue(json, new TypeReference<Map<String, String>>(){});
 			if (tok.equals(ad_token)) {
-				if (s.isNull1(barcode) && s.isNull2(barcode) && s.isNull3(barcode)) {
+				if (s.isNull(barcode, 1) && s.isNull(barcode, 2) && s.isNull(barcode, 3)) {
 					s.closeConnection();
 					map.put("error", "Product not found");
 					return map;
@@ -198,56 +205,26 @@ public class InventoryController {
 							 json_map.get("name"),
 							 json_map.get("quantity"),
 							 json_map.get("shop"));
-					s.updateAdmin(item, barcode);
+					boolean i = s.updateAdmin(item, barcode);
 					s.closeConnection();
-					map.put("success", "Product updated");
+					if (i) {
+						map.put("success", "Product updated");
+					}
+					else {
+						map.put("error", "Shop not exist");
+					}
+					
 					return map;
 				}
 			}
 			else if (tok.equals(s1_token)) {
-				if (s.isNull1(barcode)) {
-					s.closeConnection();
-					map.put("error", "Product not found");
-					return map;
-				}
-				else {
-					s.updateShop1(json_map.get("type"),
-							 json_map.get("quantity"),
-							 barcode);
-					s.closeConnection();
-					map.put("success", "Product updated");
-					return map;
-				}
+				return updateShop(s, barcode, 1, json_map);
 			}
 			else if (tok.equals(s2_token)) {
-				if (s.isNull2(barcode)) {
-					s.closeConnection();
-					map.put("error", "Product not found");
-					return map;
-				}
-				else {
-					s.updateShop2(json_map.get("type"),
-							 json_map.get("quantity"),
-							 barcode);
-					s.closeConnection();
-					map.put("success", "Product updated");
-					return map;
-				}
+				return updateShop(s, barcode, 2, json_map);
 			}
 			else if (tok.equals(s3_token)) {
-				if (s.isNull3(barcode)) {
-					s.closeConnection();
-					map.put("error", "Product not found");
-					return map;
-				}
-				else {
-					s.updateShop3(json_map.get("type"),
-							 json_map.get("quantity"),
-							 barcode);
-					s.closeConnection();
-					map.put("success", "Product updated");
-					return map;
-				}
+				return updateShop(s, barcode, 3, json_map);
 			}
 			else {
 				s.closeConnection();
@@ -273,7 +250,7 @@ public class InventoryController {
 			if (tok.equals(ad_token)) {
 				String d=json_map.get("shop");
 				if (d.equals("1")) {
-					boolean i = s.delete1(barcode);
+					boolean i = s.delete(barcode, 1);
 					if (i) {
 						s.closeConnection();
 						map.put("success", "Product deleted");
@@ -286,7 +263,7 @@ public class InventoryController {
 					}
 				}
 				else if (d.equals("2")) {
-					boolean i = s.delete2(barcode);
+					boolean i = s.delete(barcode, 2);
 					if (i) {
 						s.closeConnection();
 						map.put("success", "Product deleted");
@@ -299,7 +276,7 @@ public class InventoryController {
 					}
 				}
 				else if (d.equals("3")) {
-					boolean i = s.delete3(barcode);
+					boolean i = s.delete(barcode, 3);
 					if (i) {
 						s.closeConnection();
 						map.put("success", "Product deleted");
@@ -344,40 +321,13 @@ public class InventoryController {
 			}
 			else {
 				if (item.getShop().equals("1")) {
-					if (s.create1(item)) {
-						s.closeConnection();
-						map.put("success", "Product added");
-						return map;
-					}
-					else {
-						s.closeConnection();
-						map.put("error", "Product duplicated");
-						return map;
-					}
+					return createItem(s, item, 1);
 				}
 				else if (item.getShop().equals("2")) {
-					if (s.create2(item)) {
-						s.closeConnection();
-						map.put("success", "Product added");
-						return map;
-					}
-					else {
-						s.closeConnection();
-						map.put("error", "Product duplicated");
-						return map;
-					}
+					return createItem(s, item, 2);
 				}
 				else if (item.getShop().equals("3")) {
-					if (s.create3(item)) {
-						s.closeConnection();
-						map.put("success", "Product added");
-						return map;
-					}
-					else {
-						s.closeConnection();
-						map.put("error", "Product duplicated");
-						return map;
-					}
+					return createItem(s, item, 3);
 				}
 				else {
 					s.closeConnection();
