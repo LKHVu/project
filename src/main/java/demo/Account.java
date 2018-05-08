@@ -1,22 +1,20 @@
 package demo;
 
 public class Account {
-	private String name;
-	private String password;
+	private String user;
+	private String pass;
 	
-	public Account(){
+	public Account() {
+	}
+	public Account(String user, String pass) {
+		this.user=user;
+		this.pass=pass;
+	}
+	public String getUser() {
+		return user;
+	}
+	public String getPass() {
+		return pass;
 	}
 	
-	public Account(String name, String password) {
-		this.name = name;
-		this.password = password;
-	}
-	
-	public String getName() {
-		return name;
-	}
-	
-	public String getPassword() {
-		return password;
-	}
 }
